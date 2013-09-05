@@ -1,0 +1,7 @@
+# Redis config
+redis:
+  :host: beardfish.redistogo.com
+  :password: 7340e26e65aac557dc8d92f19d82e4ee
+  :port: 10300
+  :db: 0
+  :thread_safe: true

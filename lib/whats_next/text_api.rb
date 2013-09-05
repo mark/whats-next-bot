@@ -53,13 +53,13 @@ module WhatsNext
     ####################
     
     def execute(string)
-      command, method = COMMANDS.detect { |cmd, meth| starts_with?(string, cmd) }
+      Output.new.tap do |output|
+        command, method = COMMANDS.detect { |cmd, meth| starts_with?(string, cmd) }
 
-      if command
-        text = clip(string, command)
-        send(method, text)
-      else
-        later(string)
+        if command
+          text = clip(string, command)
+          send(method, text, output)
+        end
       end
     end
 
@@ -83,25 +83,32 @@ module WhatsNext
 
     private
     
-    def first(task)
+    def first(task, output)
+      output.puts "did :first on #{ task.inspect }"
     end
 
-    def next_do(task)
+    def next_do(task, output)
+      output.puts "did :next_do on #{ task.inspect }"
     end
 
-    def later(task)
+    def later(task, output)
+      output.puts "did :later on #{ task.inspect }"
     end
 
-    def break_down(task)
+    def break_down(task, output)
+      output.puts "did :break_down on #{ task.inspect }"
     end
 
-    def finish(task)
+    def finish(task, output)
+      output.puts "did :finish on #{ task.inspect }"
     end
 
-    def focus_on(task)
+    def focus_on(task, output)
+      output.puts "did :focus_on on #{ task.inspect }"
     end
 
-    def also(task)
+    def also(task, output)
+      output.puts "did :also on #{ task.inspect }"
     end
 
   end

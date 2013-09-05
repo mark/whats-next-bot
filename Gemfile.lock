@@ -2,9 +2,11 @@ GEM
   remote: https://rubygems.org/
   specs:
     cinch (2.0.9)
+    redis (3.0.4)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
   cinch
+  redis

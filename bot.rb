@@ -3,16 +3,9 @@
 require 'bundler/setup'
 Bundler.require(:default)
 
-bot = Cinch::Bot.new do
-  configure do |c|
-    c.server   = "irc.freenode.org"
-    c.nick     = "whats-next-bot"
-    c.channels = ["#whats-next"]
-  end
+$:.unshift File.join(File.dirname(__FILE__), 'lib')
 
-  on :message, "hello" do |m|
-    m.reply "Hello, #{m.user.nick}"
-  end
-end
+require 'whats_next'
 
-bot.start
+Env::Redis.start!
+Env::Bot.start!
