@@ -1,0 +1,39 @@
+#!/usr/bin/env ruby
+
+require 'bundler/setup'
+Bundler.require(:default)
+
+$:.unshift 'lib'
+
+require 'whats_next'
+
+Env::Redis.start!
+
+$laptop   = "whats-next-plugin-markjosef_air-whats-next"
+
+workspace = WhatsNext::Serializer.load_from_redis $laptop
+output    = ScreenOutput.new
+api       = WhatsNext::TextApi.new(workspace)
+options   = { to: output }
+
+loop do
+  WhatsNext::Printer.print(workspace, options)
+  output.puts
+
+  print "api> "
+  line = gets
+  
+  if %w(break quit \\q exit bye).include?(line.downcase.strip)
+    break
+  elsif %w(save \\s).include?(line.downcase.strip)
+    WhatsNext::Serializer.dump_on_redis(workspace, $laptop)
+  elsif line.strip.empty?
+    next
+  elsif line.strip =~ /^\\p (.+)$/
+    new_options = eval "{#{$1}}" # Oh man
+    options.merge!(new_options)
+  else
+    api.execute(line.strip, output)
+    output.puts
+  end
+end

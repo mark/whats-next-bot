@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+
+require 'bundler/setup'
+Bundler.require(:default)
+
+$:.unshift 'lib'
+
+require 'whats_next'
+
+Env::Redis.start!
+
+require 'irb'
+require 'irb/completion'
+
+$laptop  = "whats-next-plugin-markjosef_air-whats-next"
+$desktop = "whats-next-plugin-markjosef-whats-next"
+
+IRB.start

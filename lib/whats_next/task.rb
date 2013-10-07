@@ -28,10 +28,6 @@ module WhatsNext
     #                  #
     ####################
     
-    def add_note(string)
-      notes << string
-    end
-    
     def background?
       @status == :background
     end
@@ -56,6 +52,10 @@ module WhatsNext
       @status = :foreground
     end
 
+    def note(string)
+      notes << string
+    end
+    
   end
 
 end

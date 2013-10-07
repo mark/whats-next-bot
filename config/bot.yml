@@ -1,7 +1,7 @@
 # Cinch bot configs
 bot:
   server: irc.freenode.net
-  nick: whats-next-bot-dev
+  nick: whats-next
   channels:
   - '#whats-next'
   plugins:

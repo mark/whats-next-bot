@@ -1,3 +1,5 @@
+require 'cinch'
+
 module WhatsNext
 
   class Plugin
@@ -28,19 +30,17 @@ module WhatsNext
           else
             print_api(m)
           end
-
-          output.lines { |line| reply_to_channel line }
         end
       end
     end
 
     def print_api(m)
       api = TextApi.new(get_projects)
-      api.execute(m.message)
+      api.execute(m.message, target: m, to: user, ping: :once)
     end
 
     def print_projects(m)
-      Printer.print(get_projects)
+      Printer.print(get_projects, target: m, to: user, ping: :once)
     end
 
     def get_projects

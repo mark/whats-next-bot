@@ -6,29 +6,31 @@ module WhatsNext
 
     def self.load(string)
       hash = JSON.parse(string)
-
-      ProjectList.new.tap do |project_list|    
-        hash['projects'].each do |project_name, project_hash|
-          project = load_project(project_name, project_hash)
-          project_list.projects[project_name] = project
-        end
-
-        project_list.current_project = hash['current_project']
-      end
+      load_workspace(hash)
     end
 
-    def self.dump(project_list)
-      dump_project_list(project_list).to_json
+    def self.load_from_redis(key)
+      string = Env.redis.get(key)
+      load(string)
+    end
+
+    def self.dump(workspace)
+      dump_workspace(workspace).to_json
+    end
+
+    def self.dump_on_redis(workspace, key)
+      string = dump(workspace)
+      Env.redis.set(key, string)
     end
 
     private
 
-    def self.dump_project_list(project_list)
+    def self.dump_workspace(workspace)
       Hash.new.tap do |hash|
-        hash['current_project'] = project_list.current_project.name if project_list.current_project
+        hash['current_project'] = workspace.current_project.name if workspace.current_project
         hash['projects']        = {}
 
-        project_list.projects.each do |project_name, project|
+        workspace.projects.each do |project_name, project|
           hash['projects'][project_name] = dump_project(project)
         end
       end
@@ -47,11 +49,13 @@ module WhatsNext
 
     def self.dump_task(task)
       Hash.new.tap do |hash|
-        hash['text'] = task.text
+        hash['text']   = task.text
 
         hash['status'] = '!' if task.foreground?
         hash['status'] = '-' if task.background?
         hash['status'] = 'X' if task.finished?
+
+        hash['notes']  = task.notes
       end
     end
 
@@ -63,13 +67,27 @@ module WhatsNext
       end
     end
 
+    def self.load_workspace(hash)
+      Workspace.new.tap do |workspace|    
+        hash['projects'].each do |project_name, project_hash|
+          project = load_project(project_name, project_hash)
+          workspace.projects[project_name] = project
+        end
+
+        workspace.current_project = hash['current_project']
+      end
+    end
+
     STATUSES = { '!' => :foreground, '-' => :background, 'X' => :finished }
 
     def self.load_task(task_hash)
       text   = task_hash['text']
       status = STATUSES[ task_hash['status'] ]
+      notes  = Array(task_hash['notes'])
 
-      Task.new(text, status)
+      Task.new(text, status).tap do |task|
+        task.notes.concat notes
+      end
     end
 
   end

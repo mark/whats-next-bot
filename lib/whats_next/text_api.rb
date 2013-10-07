@@ -19,6 +19,7 @@ module WhatsNext
       "FINISH"     => :finish,
       "FOCUS ON"   => :first,
       "ALSO"       => :also,
+      "NOTE"       => :note,
 
       # Project commands:
 
@@ -34,7 +35,7 @@ module WhatsNext
     #              #
     ################
     
-    attr_reader :projects
+    attr_reader :workspace
 
     ###############
     #             #
@@ -42,8 +43,8 @@ module WhatsNext
     #             #
     ###############
     
-    def initialize(projects)
-      @projects = projects
+    def initialize(workspace)
+      @workspace = workspace
     end
 
     ####################
@@ -52,13 +53,15 @@ module WhatsNext
     #                  #
     ####################
     
-    def execute(string)
-      Output.new.tap do |output|
+    def execute(string, output = Output.new)
+      output.tap do |output|
         command, method = COMMANDS.detect { |cmd, meth| starts_with?(string, cmd) }
 
         if command
           text = clip(string, command)
           send(method, text, output)
+        else
+          output.puts "I don't understand that."
         end
       end
     end
@@ -91,8 +94,16 @@ module WhatsNext
       output.puts "did :next_do on #{ task.inspect }"
     end
 
-    def later(task, output)
-      output.puts "did :later on #{ task.inspect }"
+    def later(text, output)
+      # output.puts "did :later on #{ task.inspect }"
+      project = workspace.current_project
+      task    = project.task(text)
+
+      if task
+        task.background!
+        project.move_to_end(task)
+        project.ensure_foregrounded_task
+      end
     end
 
     def break_down(task, output)
@@ -109,6 +120,17 @@ module WhatsNext
 
     def also(task, output)
       output.puts "did :also on #{ task.inspect }"
+    end   
+
+    def note(text, output)
+      if task = project.current_task
+        task.note text
+        output.puts "OK"
+      elsif workspace.current_project
+        output.puts "ERROR: No current project"
+      else
+        output.puts "ERROR: No current task"
+      end
     end
 
   end

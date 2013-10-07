@@ -2,41 +2,95 @@ module WhatsNext
 
   class Printer
 
+    ################
+    #              #
+    # Declarations #
+    #              #
+    ################
+    
+    attr_reader :workspace, :options
+
+    ###############
+    #             #
+    # Constructor #
+    #             #
+    ###############
+    
+    def initialize(workspace, options = {})
+      @workspace = workspace
+      @options   = options
+    end
+
     #################
     #               #
     # Class Methods #
     #               #
     #################
     
-    def self.print(project_list, options = {})
-      Output.new.tap do |output|
-        project_list.projects.each do |name, proj|
-          output.puts "#{ proj.name }:#{ project_indicator(project_list, proj) }"
-
-          proj.tasks.each do |task|
-            output.puts "  [#{ status_char(task) }] #{ task.text }"
-          end
-        end
-      end
+    def self.print(workspace, options = {})
+      new(workspace, options).print_workspace
     end
     
+    ####################
+    #                  #
+    # Instance Methods #
+    #                  #
+    ####################
+    
+    def print_workspace
+      workspace.projects.each { |_, project| print_project(project) }
+
+      output
+    end
+
     private
 
-    def self.project_indicator(list, project)
-      if project == list.current_project
-        " <--"
+    def output
+      @output ||= if target = options.delete(:target)
+        IrcOutput.new(target, options)
+      elsif options[:to] == :screen
+        ScreenOutput.new
+      elsif options[:to]
+        options[:to]
       else
-        nil
+        Output.new
       end
     end
 
-    def self.status_char(task)
-      if task.foreground?
-        ' '
-      elsif task.finished?
-        'X'
-      else
-        '-'
+    def print_project(project)
+      return if options[:only] == :current && project != workspace.current_project
+
+      puts project.name, ':', project_indicator(project)
+
+      project.tasks.each do |task|
+        print_task(task)
+      end
+    end
+
+    def print_task(task)
+      return if options[:only] == :active && ! task.foreground?
+
+      puts "  ", status_symbol(task), ' ', task.text
+
+      task.notes.each do |note|
+        puts "    * ", note
+      end
+    end
+
+    def project_indicator(project)
+      project == workspace.current_project ? ' <--' : nil
+    end
+
+    def puts(*args)
+      output.puts(*args)
+    end
+
+    def status_symbol(task)
+      case task
+      when is.foreground? then '[ ]'
+      when is.background? then '[-]'
+      when is.finished?   then '[X]'
+                          else '[?]'
       end
     end
 
